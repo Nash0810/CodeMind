@@ -1,3 +1,58 @@
 plan.txt
 .env
+*.md
+!readme.md
+!Week1_COMPLETE.md
+!WEEK1_STATUS.md
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.venv/
+venv/
+env/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+
+# Project specific
+chroma_db/
+*.json
+*.prof
+code_structure.json
+call_graph.json
+performance_baseline.json
+benchmark_results.json
+latency_benchmark.json
+golden_set_metrics.json
+parser_profile.prof
 
