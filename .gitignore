@@ -5,6 +5,13 @@ plan.txt
 !Week1_COMPLETE.md
 !WEEK1_STATUS.md
 
+# Development & Testing
+test_week3_*.py
+test_week[0-1]_*.py
+debug_*.py
+# Exception: keep valuable benchmarks
+!test_week2_benchmarking.py
+
 # Python
 __pycache__/
 *.pyc
@@ -46,6 +53,7 @@ Thumbs.db
 
 # Project specific
 chroma_db/
+.codemind_cache/
 *.json
 *.prof
 code_structure.json
@@ -56,3 +64,4 @@ latency_benchmark.json
 golden_set_metrics.json
 parser_profile.prof
 
+test_*.py

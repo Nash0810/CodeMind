@@ -44,7 +44,7 @@ class VectorStore:
         # Load embedding model (all-MiniLM for general code)
         print("Loading embedding model (all-MiniLM-L6-v2)...")
         self.embedder = SentenceTransformer('all-MiniLM-L6-v2')
-        print("✓ Embedding model loaded")
+        print("[OK] Embedding model loaded")
     
     def index_code_blocks(self, parsed_files: List[Dict[str, Any]]):
         """
@@ -65,7 +65,7 @@ class VectorStore:
         
         # Process each file
         for file_data in parsed_files:
-            file_path = file_data['file_path']
+            file_path = file_data.get('file') or file_data.get('file_path')
             
             # Index functions
             for func in file_data.get('functions', []):
@@ -78,8 +78,8 @@ class VectorStore:
                     'line_start': func['line_start'],
                     'line_end': func['line_end'],
                     'type': 'function',
-                    'docstring': func.get('docstring', '')[:200],  # Truncate for metadata
-                    'code': func['code'][:500]  # Store snippet in metadata
+                    'docstring': (func.get('docstring') or '')[:200],  # Truncate for metadata
+                    'code': (func.get('code') or '')[:500]  # Store snippet in metadata
                 })
                 
                 ids.append(f"func_{idx}")
@@ -96,8 +96,8 @@ class VectorStore:
                     'line_start': cls['line_start'],
                     'line_end': cls['line_end'],
                     'type': 'class',
-                    'docstring': cls.get('docstring', '')[:200],
-                    'code': cls['code'][:500]
+                    'docstring': (cls.get('docstring') or '')[:200],
+                    'code': ''  # Classes may not have code
                 })
                 
                 ids.append(f"class_{idx}")
@@ -120,7 +120,7 @@ class VectorStore:
         )
         
         embed_time = time.time() - start
-        print(f"✓ Embeddings generated in {embed_time:.2f}s")
+        print(f"[OK] Embeddings generated in {embed_time:.2f}s")
         print(f"  Rate: {len(documents)/embed_time:.1f} blocks/sec")
         
         # Add to ChromaDB
@@ -135,9 +135,9 @@ class VectorStore:
         )
         
         store_time = time.time() - start
-        print(f"✓ Stored in {store_time:.2f}s")
+        print(f"[OK] Stored in {store_time:.2f}s")
         
-        print(f"\n✅ Indexed {len(documents)} code blocks")
+        print(f"\n[SUCCESS] Indexed {len(documents)} code blocks")
     
     def _format_code_block(self, code_unit: dict, file_path: str, block_type: str) -> str:
         """
@@ -157,8 +157,13 @@ class VectorStore:
         if code_unit.get('docstring'):
             parts.append(f"Description: {code_unit['docstring']}")
         
-        # Add code
-        parts.append(f"Code:\n{code_unit['code']}")
+        # Add code if present (classes may not have it)
+        if code_unit.get('code'):
+            parts.append(f"Code:\n{code_unit['code']}")
+        
+        # For classes, add base classes info
+        if block_type == 'class' and code_unit.get('base_classes'):
+            parts.append(f"Bases: {', '.join(code_unit['base_classes'])}")
         
         return "\n".join(parts)
     

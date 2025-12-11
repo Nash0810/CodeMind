@@ -31,7 +31,7 @@ class KeywordSearch:
         print("="*60)
         
         for file_data in parsed_files:
-            file_path = file_data['file_path']
+            file_path = file_data.get('file') or file_data.get('file_path')
             
             # Index functions
             for func in file_data.get('functions', []):
@@ -58,12 +58,12 @@ class KeywordSearch:
                     'line_start': cls['line_start'],
                     'line_end': cls['line_end'],
                     'type': 'class',
-                    'code': cls['code']
+                    'code': ''  # Classes don't have code field
                 })
         
         # Build BM25 index
         self.bm25 = BM25Okapi(self.corpus)
-        print(f"✅ Built BM25 index with {len(self.corpus)} documents")
+        print(f"[SUCCESS] Built BM25 index with {len(self.corpus)} documents")
     
     def _tokenize_code_block(self, code_unit: dict) -> List[str]:
         """
@@ -81,10 +81,11 @@ class KeywordSearch:
         name = code_unit['name']
         tokens.extend([name.lower()] * 3)  # 3x weight for name
         
-        # Extract identifiers from code
-        code = code_unit['code']
-        identifiers = re.findall(r'\b[a-zA-Z_][a-zA-Z0-9_]*\b', code)
-        tokens.extend([id.lower() for id in identifiers])
+        # Extract identifiers from code (if present)
+        code = code_unit.get('code', '')
+        if code:
+            identifiers = re.findall(r'\b[a-zA-Z_][a-zA-Z0-9_]*\b', code)
+            tokens.extend([id.lower() for id in identifiers])
         
         # Add docstring words
         if code_unit.get('docstring'):
