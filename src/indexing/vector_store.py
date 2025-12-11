@@ -204,6 +204,55 @@ class VectorStore:
         
         return formatted
     
+    def embed_query(self, query: str) -> List[float]:
+        """
+        Generate embedding for a query.
+        
+        Args:
+            query: Search query
+            
+        Returns:
+            Embedding vector as list
+        """
+        embedding = self.embedder.encode([query])[0]
+        return embedding.tolist()
+    
+    def search_by_embedding(self, embedding: List[float], top_k: int = 10) -> List[Dict[str, Any]]:
+        """
+        Search using a pre-computed embedding.
+        
+        Useful for optimization strategies that cache embeddings.
+        
+        Args:
+            embedding: Pre-computed embedding vector
+            top_k: Number of results to return
+            
+        Returns:
+            List of search results with scores and metadata
+        """
+        # Search in ChromaDB
+        results = self.collection.query(
+            query_embeddings=[embedding],
+            n_results=top_k
+        )
+        
+        # Handle empty results
+        if not results['ids'] or len(results['ids'][0]) == 0:
+            return []
+        
+        # Format results
+        formatted = []
+        for i in range(len(results['ids'][0])):
+            formatted.append({
+                'id': results['ids'][0][i],
+                'document': results['documents'][0][i],
+                'metadata': results['metadatas'][0][i],
+                'distance': results['distances'][0][i],
+                'score': 1 - results['distances'][0][i]
+            })
+        
+        return formatted
+    
     def count(self) -> int:
         """Returns number of indexed blocks"""
         return self.collection.count()
