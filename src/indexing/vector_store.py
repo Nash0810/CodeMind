@@ -51,7 +51,7 @@ class VectorStore:
         Indexes code blocks from parsed repository data.
         
         Args:
-            parsed_files: List of file metadata dicts from parser
+            parsed_files: List of file metadata dicts or FileMetadata objects from parser
         """
         print("\n" + "="*60)
         print("VECTOR INDEXING")
@@ -65,38 +65,59 @@ class VectorStore:
         
         # Process each file
         for file_data in parsed_files:
-            file_path = file_data.get('file') or file_data.get('file_path')
+            # Handle both dict and FileMetadata object
+            if hasattr(file_data, 'file_path'):  # FileMetadata object
+                file_path = file_data.file_path
+                functions = file_data.functions
+                classes = file_data.classes
+            else:  # dict
+                file_path = file_data.get('file') or file_data.get('file_path')
+                functions = file_data.get('functions', [])
+                classes = file_data.get('classes', [])
             
             # Index functions
-            for func in file_data.get('functions', []):
+            for func in functions:
                 doc = self._format_code_block(func, file_path, 'function')
                 documents.append(doc)
                 
+                # Handle both dict and object attributes
+                func_name = func.get('name') if isinstance(func, dict) else func.name
+                func_line_start = func.get('line_start') if isinstance(func, dict) else func.line_start
+                func_line_end = func.get('line_end') if isinstance(func, dict) else func.line_end
+                func_docstring = func.get('docstring') if isinstance(func, dict) else func.docstring
+                func_code = func.get('code') if isinstance(func, dict) else func.code
+                
                 metadatas.append({
                     'file': file_path,
-                    'name': func['name'],
-                    'line_start': func['line_start'],
-                    'line_end': func['line_end'],
+                    'name': func_name,
+                    'line_start': func_line_start,
+                    'line_end': func_line_end,
                     'type': 'function',
-                    'docstring': (func.get('docstring') or '')[:200],  # Truncate for metadata
-                    'code': (func.get('code') or '')[:500]  # Store snippet in metadata
+                    'docstring': (func_docstring or '')[:200],  # Truncate for metadata
+                    'code': (func_code or '')[:500]  # Store snippet in metadata
                 })
                 
                 ids.append(f"func_{idx}")
                 idx += 1
             
             # Index classes (including their methods)
-            for cls in file_data.get('classes', []):
+            for cls in classes:
                 doc = self._format_code_block(cls, file_path, 'class')
                 documents.append(doc)
                 
+                # Handle both dict and object attributes
+                cls_name = cls.get('name') if isinstance(cls, dict) else cls.name
+                cls_line_start = cls.get('line_start') if isinstance(cls, dict) else cls.line_start
+                cls_line_end = cls.get('line_end') if isinstance(cls, dict) else cls.line_end
+                cls_docstring = cls.get('docstring') if isinstance(cls, dict) else cls.docstring
+                
                 metadatas.append({
                     'file': file_path,
-                    'name': cls['name'],
-                    'line_start': cls['line_start'],
-                    'line_end': cls['line_end'],
+                    'name': cls_name,
+                    'line_start': cls_line_start,
+                    'line_end': cls_line_end,
                     'type': 'class',
-                    'docstring': (cls.get('docstring') or '')[:200],
+                    'docstring': (cls_docstring or '')[:200],
                     'code': ''  # Classes may not have code
                 })
                 
@@ -148,22 +169,28 @@ class VectorStore:
         """
         parts = []
         
+        # Handle both dict and object attributes
+        name = code_unit.get('name') if isinstance(code_unit, dict) else code_unit.name
+        docstring = code_unit.get('docstring') if isinstance(code_unit, dict) else code_unit.docstring
+        code = code_unit.get('code') if isinstance(code_unit, dict) else code_unit.code
+        
         # Add context
         parts.append(f"File: {file_path}")
         parts.append(f"Type: {block_type}")
-        parts.append(f"Name: {code_unit['name']}")
+        parts.append(f"Name: {name}")
         
         # Add docstring if present
-        if code_unit.get('docstring'):
-            parts.append(f"Description: {code_unit['docstring']}")
+        if docstring:
+            parts.append(f"Description: {docstring}")
         
         # Add code if present (classes may not have it)
-        if code_unit.get('code'):
-            parts.append(f"Code:\n{code_unit['code']}")
+        if code:
+            parts.append(f"Code:\n{code}")
         
         # For classes, add base classes info
-        if block_type == 'class' and code_unit.get('base_classes'):
-            parts.append(f"Bases: {', '.join(code_unit['base_classes'])}")
+        base_classes = code_unit.get('base_classes') if isinstance(code_unit, dict) else getattr(code_unit, 'base_classes', None)
+        if block_type == 'class' and base_classes:
+            parts.append(f"Bases: {', '.join(base_classes)}")
         
         return "\n".join(parts)
     

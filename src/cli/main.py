@@ -4,6 +4,7 @@ import click
 from .parse import parse
 from .query import search_command
 from .tui import run_tui
+from .chat import chat_command
 
 
 @click.group()
@@ -14,6 +15,7 @@ def cli():
 
 cli.add_command(parse)
 cli.add_command(search_command, name='search')
+cli.add_command(chat_command, name='chat')
 
 
 @cli.command(name='interactive')

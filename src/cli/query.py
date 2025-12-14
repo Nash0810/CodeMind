@@ -13,6 +13,7 @@ from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
 from rich.syntax import Syntax
+from rich.box import ASCII
 
 from src.indexing.vector_store import VectorStore
 from src.indexing.keyword_search import KeywordSearch
@@ -220,8 +221,8 @@ class QueryEngine:
             self.console.print(f"[yellow]No results found for: '{query}'[/yellow]")
             return
         
-        # Create results table
-        table = Table(title=f"Search Results for '{query}'")
+        # Create results table with ASCII style for Windows compatibility
+        table = Table(title=f"Search Results for '{query}'", box=ASCII)
         table.add_column("Rank", style="cyan")
         table.add_column("Name", style="green")
         table.add_column("Type", style="magenta")
